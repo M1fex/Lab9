@@ -46,7 +46,6 @@ public class Main {
         for (Thread thread : threads) {
             thread.start();
         }
-
         for (Thread thread : threads) {
             thread.join();
         }
@@ -62,9 +61,61 @@ public class Main {
             }
         }
 
-        System.out.println("Все потоки завершились");
-        System.out.println("Сумма после переводов: " + finalTotal);
-        System.out.println("Суммы совпадают: " + (initialTotal == finalTotal));
-        System.out.println("Нет отрицательных балансов: " + allBalancesNonNegative);
+        System.out.println("Всі потоки закінчились");
+        System.out.println("Сума після переводів: " + finalTotal);
+        System.out.println("Суми співпадають: " + (initialTotal == finalTotal));
+        System.out.println("Нема від'ємних балансів: " + allBalancesNonNegative);
+
+//======================================================================================================================
+
+        RingBuffer firstBuffer = new RingBuffer(10);
+        RingBuffer secondBuffer = new RingBuffer(10);
+
+        for (int i = 0; i < 5; i++) {
+            int producerId = i + 1;
+
+            Thread producer = new Thread(() -> {
+                int counter = 1;
+
+                try {
+                    while (true) {
+                        firstBuffer.put("Потік № " + producerId + " згенерував повідомлення " + counter);
+                        counter++;
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+
+            producer.setDaemon(true);
+            producer.start();
+        }
+
+
+        for (int i = 0; i < 2; i++) {
+            int translatorId = i + 6;
+
+            Thread translator = new Thread(() -> {
+                try {
+                    while (true) {
+                        String message = firstBuffer.take();
+                        secondBuffer.put(
+                                "Потік № " + translatorId
+                                        + " переклав повідомлення: " + message
+                        );
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+
+            translator.setDaemon(true);
+            translator.start();
+        }
+
+
+        for (int i = 0; i < 100; i++) {
+            System.out.println(secondBuffer.take());
+        }
     }
 }
